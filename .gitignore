@@ -1,0 +1,4 @@
+config.py
+*.pyc
+data.db
+data.db.bak
