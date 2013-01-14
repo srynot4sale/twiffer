@@ -23,11 +23,12 @@ def main():
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
-    # Create table
-#    c.execute('''CREATE TABLE ratings (tweetid text, user text, rating integer)''')
-
-    # Save (commit) the changes
-#    conn.commit()
+    print 'Checking if database needs setting up...'
+    c.execute('SELECT name FROM sqlite_master WHERE type = ? AND name = ?', ['table', 'ratings'])
+    if not c.fetchone():
+        print 'Setup database...'
+        c.execute('''CREATE TABLE ratings (tweetid text, user text, rating integer)''')
+        conn.commit()
 
     print 'Authenticating...'
 
