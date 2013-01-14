@@ -8,12 +8,6 @@ import config
 
 def main():
 
-    if len(sys.argv) > 1:
-         print 'Get tweets before %s' % sys.argv[1]
-         max_id = sys.argv[1]
-    else:
-        max_id = ''
-
     db_path = os.path.join(sys.path[0], 'data.db')
 
     print 'Create backup of database...'
@@ -39,11 +33,16 @@ def main():
             domain='api.twitter.com'
     )
 
-    print 'Loading tweets...'
-    if max_id:
-        iterator = twitter_stream.statuses.home_timeline(count=200, max_id=max_id)
+    print 'Get last tweet read...'
+    c.execute('SELECT MAX(tweetid) FROM ratings')
+    result = c.fetchone()
+    if result:
+        tweet_id = result[0]
     else:
-        iterator = twitter_stream.statuses.home_timeline(count=200)
+        tweet_id = 0
+
+    print 'Loading tweets...'
+    iterator = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id)
 
     if iterator:
         for tweet in iterator:
