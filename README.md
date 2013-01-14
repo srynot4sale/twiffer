@@ -1,9 +1,13 @@
 Twiffer
 =======
 
-Twiffer is a minimalistic Twitter shell client. It forces you to view
-you to rate each tweet as you view it allowing you to build up
-statistics regarding your followed user's signal-to-noise ratios.
+Twiffer is a minimalistic Twitter shell client. It forces you to rate
+each tweet as you view it allowing you to build up statistics
+regarding your followed user's signal-to-noise ratios.
+
+The goal of using this client over others is to help "tune" your follow
+list so you can spend less time checking Twitter, and at the same time
+hopefully get more from it.
 
 Twiffer can be launched by running twiffer.py. Stats can be reviewed
 by running stats.py.
@@ -79,8 +83,8 @@ your own data.
     )
 
 
-Working with OAuth
-------------------
+Getting your OAuth details
+--------------------------
 
 Visit the Twitter developer page and create a new application:
 
