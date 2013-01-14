@@ -45,6 +45,10 @@ def main():
     iterator = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id)
 
     if iterator:
+        iterator.reverse()
+
+        print 'Loaded %d tweets...' % len(iterator)
+
         for tweet in iterator:
             handle = tweet['user']['screen_name'].strip()
 
@@ -129,7 +133,7 @@ def main():
                 continue
 
         if i != 'q':
-            iterator = twitter_stream.statuses.home_timeline(count=200, max_id=tweet_id)
+            iterator = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id)
 
     conn.close()
 
