@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import twitter
 import shutil
 import sys, tty, termios, os
@@ -12,11 +14,13 @@ def main():
     else:
         max_id = ''
 
-    print 'Backup database...'
-    shutil.copyfile('data.db', 'data.db.bak')
+    db_path = os.path.join(sys.path[0], 'data.db')
+
+    print 'Create backup of database...'
+    shutil.copyfile(db_path, db_path+'.bak')
 
     print 'Load database...'
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
     # Create table
