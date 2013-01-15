@@ -25,7 +25,6 @@ def main():
         conn.commit()
 
     print 'Authenticating...'
-
     twitter_stream = twitter.Twitter(
             auth=config.auth,
             secure=1,
@@ -42,14 +41,19 @@ def main():
         tweet_id = 0
 
     print 'Loading tweets...'
-    iterator = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id)
+    tweets = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id)
 
-    if iterator:
-        iterator.reverse()
+    while tweets:
+        tweets.reverse()
+        total = len(tweets)
 
-        print 'Loaded %d tweets...' % len(iterator)
+        print 'Loaded %d tweets...' % total
 
-        for tweet in iterator:
+        t = 0
+        while t < total:
+            tweet = tweets[t]
+            t += 1
+
             handle = tweet['user']['screen_name'].strip()
 
             name = tweet['user']['name'].strip()
@@ -79,8 +83,8 @@ def main():
             count = c.fetchone()[0]
 
             # Check if seen
-            c.execute("SELECT COUNT(tweetid) FROM ratings WHERE tweetid = ?", [tweet_id])
-            seen = c.fetchone()[0]
+            c.execute("SELECT rating FROM ratings WHERE tweetid = ?", [tweet_id])
+            seen = c.fetchone()
 
             HEADER = '\033[95m'
             OKBLUE = '\033[94m'
@@ -92,7 +96,14 @@ def main():
             print ''
 
             if seen:
-                print '%s[[SEEN]]%s' % (RED, ENDC)
+                if seen[0] == 2:
+                    rating = 'good'
+                elif seen[0] == 0:
+                    rating = 'bad'
+                else:
+                    rating = 'ok'
+
+                print '%s[[SEEN - rated %s]]%s' % (RED, rating, ENDC)
 
             print '%s%s %s(%s%s) %s%s%s' % (OKBLUE, handle, OKGREEN, name, location, retweet, reply, ENDC)
             print '%s' % text
@@ -107,16 +118,12 @@ def main():
 
             while 1:
                 i = handle_input()
-                if i in ('q', 'next', 'good', 'bad'):
+                if i != 'unknown':
                     break
 
             if i == 'q':
                 break
             elif i in ('good', 'bad', 'next'):
-                if seen:
-                    print 'Already seen!'
-                    continue
-
                 if i != 'next':
                     print 'Marked as %s' % i
 
@@ -127,13 +134,24 @@ def main():
                 else:
                     rating = 1
 
-                # Insert a row of data
-                c.execute("INSERT INTO ratings VALUES (?, ?, ?)", [tweet_id, handle, rating])
+                # Insert/update a row of data
+                if seen:
+                    c.execute("UPDATE ratings SET rating = ? WHERE tweetid = ?", [rating, tweet_id])
+                else:
+                    c.execute("INSERT INTO ratings VALUES (?, ?, ?)", [tweet_id, handle, rating])
+
                 conn.commit()
                 continue
+            elif i == 'previous':
+                print 'Go back'
+                t -= 2
+                continue
 
-        if i != 'q':
-            iterator = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id)
+        if i == 'q':
+            tweets = None
+        else:
+            tweets = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id)
+            print ''
 
     conn.close()
 
@@ -163,18 +181,19 @@ def get_input():
 
 def handle_input():
     ch = get_input()
-    c = ch.lower()
 
-    if c == 'q':
+    if ch in ('q', 'Q'):
         return 'q'
-    elif ord(c) == 98:
+    elif ord(ch) == 65:
+        return 'previous'
+    elif ord(ch) == 66:
         return 'next'
-    elif ord(c) == 99:
+    elif ord(ch) == 67:
         return 'good'
-    elif ord(c) == 100:
+    elif ord(ch) == 68:
         return 'bad'
     else:
-        print ord(c)
+        print ord(ch)
         return 'unknown'
 
 

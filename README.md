@@ -18,7 +18,8 @@ Tweets are rated/navigated by using the arrow keys:
 * Right: Good - a useful/thought provoking/entertaining tweet.
 * Left: Bad - I gained nothing from this tweet
 
-Pressing q will leave the application.
+Pressing q will leave the application. Pressing 'up' will let you return
+to a tweet to change it's rating.
 
 
 Screenshot!
