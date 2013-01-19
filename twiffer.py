@@ -5,6 +5,11 @@ import calendar, os, shutil, sys, termios, time, tty
 import sqlite3
 import config
 
+KEY_UP    = [chr(27), chr(91), 'A']
+KEY_DOWN  = [chr(27), chr(91), 'B']
+KEY_RIGHT = [chr(27), chr(91), 'C']
+KEY_LEFT  = [chr(27), chr(91), 'D']
+
 def main():
 
     db_path = os.path.join(sys.path[0], 'data.db')
@@ -116,10 +121,7 @@ def main():
 
             print 'http://twitter.com/%s/status/%s %s/%s/%s %s (%d of %d)' % (handle, tweet_id, bad, count, good, time_created, t, total)
 
-            while 1:
-                i = handle_input()
-                if i != 'unknown':
-                    break
+            i = handle_input()
 
             if i == 'q':
                 break
@@ -157,44 +159,49 @@ def main():
 
 
 def get_input():
-    try:
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
 
-        while 1:
+    # Only key presses we will return for (chr(3) is Ctrl-C)
+    acceptable_chars = [['q'], ['Q'], [chr(3)], KEY_UP, KEY_LEFT, KEY_RIGHT, KEY_DOWN]
+
+    def get_single_char():
+        # Weird code to not echo key input, and to return a byte of input at a time
+        try:
+            fd = sys.stdin.fileno()
+            old_settings = termios.tcgetattr(fd)
             tty.setraw(sys.stdin.fileno())
-            ch = sys.stdin.read(3)
+            ch = sys.stdin.read(1)
 
-            if not ch:
-                continue
+        except Exception:
+            ch = 'q'
 
-            break
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
-    except KeyboardInterrupt:
-        ch = 'q'
+        return ch
 
-    finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    chars = []
+    while chars not in acceptable_chars and chars[0:-1] not in acceptable_chars:
+        chars.append(get_single_char())
+        while len(chars) > 3:
+            chars.pop(0)
 
-    return ch[-1]
+    return chars
 
 
 def handle_input():
-    ch = get_input()
+    while 1:
+        chars = get_input()
 
-    if ch in ('q', 'Q'):
-        return 'q'
-    elif ord(ch) == 65:
-        return 'previous'
-    elif ord(ch) == 66:
-        return 'next'
-    elif ord(ch) == 67:
-        return 'good'
-    elif ord(ch) == 68:
-        return 'bad'
-    else:
-        print ord(ch)
-        return 'unknown'
+        if chars[-1] in ('q', 'Q', chr(3)):
+            return 'q'
+        elif chars == KEY_UP:
+            return 'previous'
+        elif chars == KEY_DOWN:
+            return 'next'
+        elif chars == KEY_RIGHT:
+            return 'good'
+        elif chars == KEY_LEFT:
+            return 'bad'
 
 
 main()
