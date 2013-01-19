@@ -25,35 +25,7 @@ to a tweet to change it's rating.
 Screenshot!
 -----------
 
-    $ ./twiffer.py
-    Create backup of database...
-    Load database...
-    Checking if database needs setting up...
-    Authenticating...
-    Get last tweet read...
-    Loading tweets...
-    Loaded 5 tweets...
-
-    aza (Aza Raskin - San Francisco)
-    My heart grieves for Aaron Swartz. He was a leader in the most important type of mischief: that which pushes society forward thoughtfully
-    290743186941419520 0/0/0 Mon Jan 14 08:52:32 +0000 2013
-    Marked as good
-
-    maberdour (Mark Aberdour - Brighton, UK)
-    My new blog post about mobile apps for Moodle: http://t.co/eDMQUOKy
-    290746569802801152 0/0/0 Mon Jan 14 09:05:58 +0000 2013
-
-    mattsachtler (Matt Sachtler - Redondo Beach, CA)
-    raspbmc : fairly crash-y. not sure if it's xbmc or the pi to blame, but i'm growing frustrated quickly.
-    290747002000662529 0/1/0 Mon Jan 14 09:07:41 +0000 2013
-
-    ranginui (Chris Cormack - Wellington, NZ)
-    “I Want To Take You Higher” by Sly &amp; The Family Stone is my new jam.  ♫ http://t.co/5r9k9dHT
-    290749697927282688 0/9/1 Mon Jan 14 09:18:24 +0000 2013
-
-    dakami (Dan Kaminsky - The Internets)
-    RT @hdmoore: Oracle is switching Java security settings to “high” by default: https://t.co/CnOvwklm &lt; All applets now require a click ...
-    290753525007384577 0/13/4 Mon Jan 14 09:33:36 +0000 2013
+![Screenshot](http://i.imgur.com/O2Ugg2Q.png)
 
 
 Installation
