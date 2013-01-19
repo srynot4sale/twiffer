@@ -31,10 +31,10 @@ Screenshot!
 Installation
 ------------
 
-Twiffer's only requirement is the Python Twitter Tools library. This
-library can be installed running the command
+Twiffer's only requirements are the Python Twitter Tools and Outputty
+python libraries. These can be installed with easy_install:
 
-    easy_install twitter
+    easy_install twitter outputty
 
 
 Config

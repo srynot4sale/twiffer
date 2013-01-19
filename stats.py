@@ -1,6 +1,7 @@
-import sys, tty, termios, os
-import sqlite3
+#!/usr/bin/python
 
+import sqlite3
+import outputty
 
 def main():
 
@@ -31,8 +32,7 @@ def main():
     for record in bad:
         ubad[record[0]] = record[1]
 
-    for user in utotals:
-        print '%s %s' % (user, utotals[user])
+    table = outputty.Table(headers=['Handle', 'Total', 'Good', 'Bad', 'Profile'])
 
     for user in utotals:
         total = float(utotals[user])
@@ -47,7 +47,9 @@ def main():
         else:
             b = 0.0
 
-        print '%s      %sgood     %sbad' % (user, round((g/total) * 100, 2), round((b/total) * 100, 2))
+        table.append((user, int(total), '%d%%' % int((g/total) * 100), '%d%%' % int((b/total) * 100), 'http://twitter.com/%s' % user))
 
+    table.order_by('Total', 'descending')
+    print table
 
 main()
