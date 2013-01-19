@@ -1,8 +1,7 @@
 #!/usr/bin/python
 
 import twitter
-import shutil
-import sys, tty, termios, os
+import calendar, os, shutil, sys, termios, time, tty
 import sqlite3
 import config
 
@@ -54,6 +53,8 @@ def main():
             tweet = tweets[t]
             t += 1
 
+            tweet_id = tweet['id_str']
+
             handle = tweet['user']['screen_name'].strip()
 
             name = tweet['user']['name'].strip()
@@ -63,14 +64,13 @@ def main():
                 location = ' - '+location
 
             text = tweet['text']
+            truncated = ' [truncated]' if tweet['truncated'] else ''
 
-            retweet = ('[RT %]' % tweet['retweeted']) if tweet['retweeted'] else ''
+            retweeted = ('[RT %d times]' % tweet['retweet_count']) if tweet['retweet_count'] else ''
+            reply = ('[Reply to %s] ' % tweet['in_reply_to_status_id']) if tweet['in_reply_to_status_id'] else ''
 
-            reply = ('[Reply to %s]' % tweet['in_reply_to_status_id']) if tweet['in_reply_to_status_id'] else ''
-
-            tweet_id = tweet['id_str']
-
-            timestamp = tweet['created_at']
+            timestamp_utc = calendar.timegm(time.strptime(tweet['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
+            time_created = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp_utc))
 
             # Get ratings
             c.execute("SELECT COUNT(tweetid) FROM ratings WHERE rating = 2 AND user = ?", [handle])
@@ -105,8 +105,8 @@ def main():
 
                 print '%s[[SEEN - rated %s]]%s' % (RED, rating, ENDC)
 
-            print '%s%s %s(%s%s) %s%s%s' % (OKBLUE, handle, OKGREEN, name, location, retweet, reply, ENDC)
-            print '%s' % text
+            print '%s%s %s%s%s %s%s%s' % (OKBLUE, name, OKGREEN, handle, location, reply, retweeted, ENDC)
+            print '%s%s' % (text, truncated)
 
             if good:
                 good = '%s%s%s' % (OKGREEN, good, ENDC)
@@ -114,7 +114,7 @@ def main():
             if bad:
                 bad = '%s%s%s' % (RED, bad, ENDC)
 
-            print '%s %s/%s/%s %s' % (tweet_id, bad, count, good, timestamp)
+            print 'http://twitter.com/%s/status/%s %s/%s/%s %s (%d of %d)' % (handle, tweet_id, bad, count, good, time_created, t, total)
 
             while 1:
                 i = handle_input()
