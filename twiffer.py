@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import twitter
-import calendar, os, shutil, sys, termios, time, tty
+import calendar, os, shutil, sys, termios, time, tty, urllib2
 import sqlite3
 import config
 
@@ -45,7 +45,11 @@ def main():
         tweet_id = 0
 
     print 'Loading tweets...'
-    tweets = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id)
+    try:
+        tweets = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id)
+    except urllib2.URLError as e:
+        print 'ERROR: %s' % e.reason
+        return
 
     while tweets:
         tweets.reverse()
