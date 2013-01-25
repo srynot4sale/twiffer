@@ -25,7 +25,7 @@ def main():
     c.execute('SELECT name FROM sqlite_master WHERE type = ? AND name = ?', ['table', 'ratings'])
     if not c.fetchone():
         print 'Setup database...'
-        c.execute('''CREATE TABLE ratings (tweetid text, user text, rating integer)''')
+        c.execute('''CREATE TABLE ratings (tweetid text, user text, rating integer, timestamp text)''')
         conn.commit()
 
     print 'Authenticating...'
@@ -144,7 +144,7 @@ def main():
                 if seen:
                     c.execute("UPDATE ratings SET rating = ? WHERE tweetid = ?", [rating, tweet_id])
                 else:
-                    c.execute("INSERT INTO ratings VALUES (?, ?, ?)", [tweet_id, handle, rating])
+                    c.execute("INSERT INTO ratings VALUES (?, ?, ?, ?)", [tweet_id, handle, rating, timestamp_utc])
 
                 conn.commit()
                 continue
