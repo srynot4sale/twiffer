@@ -9,6 +9,10 @@ The goal of using this client over others is to help "tune" your follow
 list so you can spend less time checking Twitter, and at the same time
 hopefully get more from it.
 
+Another feature of gathering statistics is the ability to find new
+user's to follow by how you have rated their tweets that had appeared
+due to being retweeted by someone you currently follow.
+
 Twiffer can be launched by running twiffer.py. Stats can be reviewed
 by running stats.py.
 
