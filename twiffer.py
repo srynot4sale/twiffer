@@ -78,6 +78,12 @@ def main():
             retweeted = ('[RT %d times]' % tweet['retweet_count']) if tweet['retweet_count'] else ''
             reply = ('[Reply to %s] ' % tweet['in_reply_to_status_id']) if tweet['in_reply_to_status_id'] else ''
 
+            # Get original tweet if retweet
+            retweet = False
+            if 'retweeted_status' in tweet:
+                retweet = tweet['retweeted_status']
+                text = 'RT @%s: %s' % (retweet['user']['screen_name'].strip(), retweet['text'])
+
             timestamp_utc = calendar.timegm(time.strptime(tweet['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
             time_created = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp_utc))
 
