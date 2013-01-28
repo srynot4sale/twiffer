@@ -50,6 +50,9 @@ def main():
     except urllib2.URLError as e:
         print 'ERROR: %s' % e.reason
         return
+    except twitter.TwitterError as e:
+        print 'ERROR: Twitter sent HTTP status code %d' % e.e.code
+        return
 
     while tweets:
         tweets.reverse()
