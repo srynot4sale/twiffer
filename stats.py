@@ -1,14 +1,52 @@
 #!/usr/bin/python
 
 import sqlite3
-import time
-import outputty
+import os, sys, time, urllib2
+import outputty, twitter
+import config
 
 def main():
 
+    db_path = os.path.join(sys.path[0], 'data.db')
+
     print 'Load database...'
-    conn = sqlite3.connect('data.db')
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
+
+    print 'Authenticating...'
+    twitter_stream = twitter.Twitter(
+            auth=config.auth,
+            secure=1,
+            api_version='1.1',
+            domain='api.twitter.com'
+    )
+
+    print 'Loading follow list...'
+    try:
+        follows = []
+        next_cursor = -1
+        while 1:
+            print '.'
+            tf = twitter_stream.friends.list(cursor=next_cursor)
+
+            if not tf:
+                break
+
+            follows += tf['users']
+
+            if not tf['next_cursor']:
+                break
+
+            next_cursor = tf['next_cursor']
+
+    except urllib2.URLError as e:
+        print 'ERROR: %s' % e.reason
+        return
+
+    except twitter.TwitterError as e:
+        print 'ERROR: Twitter sent HTTP status code %d' % e.e.code
+        return
+
 
     t = {}
     c.execute("SELECT user, COUNT(tweetid) FROM ratings WHERE retweet IS NULL GROUP BY user ORDER BY user")
@@ -41,8 +79,13 @@ def main():
 
     table = outputty.Table(headers=['Handle', 'Total', 'Good', 'Bad', 'Newest', 'Oldest', 'Tweets/day', 'Profile'])
 
-    for user in u['totals']:
-        total = float(u['totals'][user])
+    for follow in follows:
+        user = follow['screen_name']
+
+        if user in u['totals']:
+            total = float(u['totals'][user])
+        else:
+            total = 0
 
         if user in u['timed']:
             timed = float(u['timed'][user])
@@ -74,7 +117,15 @@ def main():
         else:
             t = 0
 
-        table.append((user, int(total), '%d%%' % int((g/total) * 100), '%d%%' % int((b/total) * 100), n, o, round(t, 5), 'http://twitter.com/%s' % user))
+        percentgood = 0
+        if g and t:
+            percentgood = int((g/total) * 100)
+
+        percentbad = 0
+        if b and t:
+            percentbad = int((b/total) * 100)
+
+        table.append((user, int(total), '%d%%' % percentgood, '%d%%' % percentbad, n, o, round(t), 'http://twitter.com/%s' % user))
 
     table.order_by('Tweets/day', 'descending')
     print table
@@ -82,7 +133,7 @@ def main():
 
     # People you should follow (that don't currently)
     t = {}
-    c.execute("SELECT user, COUNT(tweetid) FROM ratings WHERE retweet = 1 GROUP BY user ORDER BY user")
+    c.execute("SELECT user, COUNT(tweetid) FROM ratings WHERE retweet = 1 GROUP BY user HAVING COUNT(tweetid) > 1 ORDER BY user")
     t['totals'] = c.fetchall()
 
     c.execute("SELECT user, COUNT(tweetid) FROM ratings WHERE retweet = 1 AND rating = 2 GROUP BY user ORDER BY user")
