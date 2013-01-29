@@ -1,8 +1,7 @@
 #!/usr/bin/python
 
 import twitter
-import calendar, os, shutil, sys, termios, time, tty, urllib2
-import sqlite3
+import calendar, os, shutil, sqlite3, sys, termios, time, tty, urllib2
 import config
 
 KEY_UP    = [chr(27), chr(91), 'A']
@@ -10,8 +9,8 @@ KEY_DOWN  = [chr(27), chr(91), 'B']
 KEY_RIGHT = [chr(27), chr(91), 'C']
 KEY_LEFT  = [chr(27), chr(91), 'D']
 
-def main():
 
+def main():
     db_path = os.path.join(sys.path[0], 'data.db')
 
     print 'Create backup of database...'
@@ -39,10 +38,7 @@ def main():
     print 'Get last tweet read...'
     c.execute('SELECT MAX(tweetid) FROM ratings')
     result = c.fetchone()
-    if result:
-        tweet_id = result[0]
-    else:
-        tweet_id = 0
+    tweet_id = result[0] if result else 0
 
     print 'Loading tweets...'
     try:
@@ -79,77 +75,34 @@ def main():
             t += 1
 
             tweet_id = tweet['id_str']
-
             handle = tweet['user']['screen_name'].strip()
 
-            name = tweet['user']['name'].strip()
-
-            location = tweet['user']['location'].strip()
-            if location:
-                location = ' - '+location
-
-            text = tweet['text']
-            truncated = ' [truncated]' if tweet['truncated'] else ''
-
-            retweeted = ('[RT %d times]' % tweet['retweet_count']) if tweet['retweet_count'] else ''
-            reply = ('[Reply to %s] ' % tweet['in_reply_to_status_id']) if tweet['in_reply_to_status_id'] else ''
-
-            # Get original tweet if retweet
-            retweet = False
-            if 'retweeted_status' in tweet:
-                retweet = tweet['retweeted_status']
-                text = 'RT @%s: %s' % (retweet['user']['screen_name'].strip(), retweet['text'])
-
-            timestamp_utc = calendar.timegm(time.strptime(tweet['created_at'],'%a %b %d %H:%M:%S +0000 %Y'))
-            time_created = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp_utc))
-
             # Get ratings
+            ratings = {}
             c.execute("SELECT COUNT(tweetid) FROM ratings WHERE rating = 2 AND user = ?", [handle])
-            good = c.fetchone()[0]
-
+            ratings['good'] = c.fetchone()[0]
             c.execute("SELECT COUNT(tweetid) FROM ratings WHERE rating = 0 AND user = ?", [handle])
-            bad = c.fetchone()[0]
-
+            ratings['bad'] = c.fetchone()[0]
             c.execute("SELECT COUNT(tweetid) FROM ratings WHERE user = ?", [handle])
-            count = c.fetchone()[0]
+            ratings['count'] = c.fetchone()[0]
 
             # Check if seen
             c.execute("SELECT rating FROM ratings WHERE tweetid = ?", [tweet_id])
             seen = c.fetchone()
 
-            HEADER = '\033[95m'
-            OKBLUE = '\033[94m'
-            OKGREEN = '\033[92m'
-            RED = '\033[91m'
-            ORANGE = '\033[93m'
-            ENDC = '\033[0m'
+            # Get original tweet if retweet
+            retweet = False
+            if 'retweeted_status' in tweet:
+                retweet = tweet['retweeted_status']
+                tweet['text'] = 'RT @%s: %s' % (retweet['user']['screen_name'].strip(), retweet['text'])
 
-            print ''
+            # Display tweet
+            print format_tweet(tweet, retweet, seen, ratings, t, total)
 
-            if seen:
-                if seen[0] == 2:
-                    rating = 'good'
-                elif seen[0] == 0:
-                    rating = 'bad'
-                else:
-                    rating = 'ok'
-
-                print '%s[[SEEN - rated %s]]%s' % (RED, rating, ENDC)
-
-            print '%s%s %s%s%s %s%s%s' % (OKBLUE, name, OKGREEN, handle, location, reply, retweeted, ENDC)
-            print '%s%s' % (text, truncated)
-
-            if good:
-                good = '%s%s%s' % (OKGREEN, good, ENDC)
-
-            if bad:
-                bad = '%s%s%s' % (RED, bad, ENDC)
-
-            print 'http://twitter.com/%s/status/%s %s/%s/%s %s (%d of %d)' % (handle, tweet_id, bad, count, good, time_created, t, total)
-
+            # Wait for input
             i = handle_input()
 
-            if i == 'q':
+            if i == 'quit':
                 break
             elif i in ('good', 'bad', 'next'):
                 if i != 'next':
@@ -161,6 +114,8 @@ def main():
                     rating = 0
                 else:
                     rating = 1
+
+                timestamp_utc = get_utc_timestamp(tweet['created_at'])
 
                 # Insert/update a row of data
                 if seen:
@@ -185,7 +140,7 @@ def main():
                 t -= 2
                 continue
 
-        if i == 'q':
+        if i == 'quit':
             tweets = None
         else:
             tweets = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id)
@@ -229,7 +184,7 @@ def handle_input():
         chars = get_input()
 
         if chars[-1] in ('q', 'Q', chr(3)):
-            return 'q'
+            return 'quit'
         elif chars == KEY_UP:
             return 'previous'
         elif chars == KEY_DOWN:
@@ -238,6 +193,60 @@ def handle_input():
             return 'good'
         elif chars == KEY_LEFT:
             return 'bad'
+
+
+def get_utc_timestamp(timecreated):
+    return calendar.timegm(time.strptime(timecreated,'%a %b %d %H:%M:%S +0000 %Y'))
+
+
+def format_tweet(tweet, retweet, seen, ratings, count, total):
+    tweet_id = tweet['id_str']
+    handle = tweet['user']['screen_name'].strip()
+    name = tweet['user']['name'].strip()
+    text = tweet['text']
+    retweeted = ('[RT %d times]' % tweet['retweet_count']) if tweet['retweet_count'] else ''
+    reply = ('[Reply to %s] ' % tweet['in_reply_to_status_id']) if tweet['in_reply_to_status_id'] else ''
+
+    location = tweet['user']['location'].strip()
+    if location:
+        location = ' - '+location
+
+    time_created = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(get_utc_timestamp(tweet['created_at'])))
+
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    RED = '\033[91m'
+    ENDC = '\033[0m'
+
+    display = '\n'
+
+    if seen:
+        if seen[0] == 2:
+            rating = 'good'
+        elif seen[0] == 0:
+            rating = 'bad'
+        else:
+            rating = 'ok'
+
+        display += '%s[[SEEN - rated %s]]%s\n' % (RED, rating, ENDC)
+
+    display += '%s%s %s%s%s %s%s%s\n' % (BLUE, name, GREEN, handle, location, reply, retweeted, ENDC)
+    display += '%s\n' % text
+
+    if ratings['good']:
+        ratings['good'] = '%s%s%s' % (GREEN, ratings['good'], ENDC)
+
+    if ratings['bad']:
+        ratings['bad'] = '%s%s%s' % (RED, ratings['bad'], ENDC)
+
+    display += 'http://twitter.com/%s/status/%s %s/%s/%s %s (%d of %d)' % (
+            handle, tweet_id,
+            ratings['bad'], ratings['count'], ratings['good'],
+            time_created,
+            count, total
+    )
+
+    return display
 
 
 main()
