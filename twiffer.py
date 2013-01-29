@@ -46,7 +46,20 @@ def main():
 
     print 'Loading tweets...'
     try:
-        tweets = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id)
+        tweets = []
+        max_id = None
+        while 1:
+            if max_id:
+                page = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id, max_id=max_id)
+            else:
+                page = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id)
+
+            tweets += page
+            if len(page) < 200:
+                break
+
+            max_id = tweets[-1]['id'] - 1
+
     except urllib2.URLError as e:
         print 'ERROR: %s' % e.reason
         return
