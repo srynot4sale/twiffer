@@ -51,7 +51,7 @@ def main():
                 page = twitter_stream.statuses.home_timeline(count=200, since_id=tweet_id)
 
             tweets += page
-            if len(page) < 200:
+            if len(page) == 0:
                 break
 
             max_id = tweets[-1]['id'] - 1
