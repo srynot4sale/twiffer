@@ -213,6 +213,11 @@ def format_tweet(tweet, retweet, seen, ratings, count, total):
 
     time_created = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(get_utc_timestamp(tweet['created_at'])))
 
+    # Expand links in tweet
+    if 'entities' in tweet.keys() and 'urls' in tweet['entities'].keys():
+        for url in tweet['entities']['urls']:
+            text = text.replace(url['url'], url['expanded_url'])
+
     BLUE = '\033[94m'
     GREEN = '\033[92m'
     RED = '\033[91m'
